@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SyncWebjobs;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using Azure.Storage.Queues;
 
 namespace ConsoleApp4
 {
@@ -16,24 +19,28 @@ namespace ConsoleApp4
         static async Task Main()
         {
 
-            var storageAccountConnectionString = "";
-            var queueName = "";
+            var storageAccountConnectionString = "DefaultEndpointsProtocol=https;AccountName=triptisa;AccountKey=uXRaSzNBsHMTDlb9CIueE79MtCzER56cy4mi5m/1BQXcYztrXuA7z/vc+v7m69qlgQod+ILa4yla+ASto+rYXQ==;EndpointSuffix=core.windows.net";
+            var queueName = "propertyqueue";
             PropertyService propertyService = new PropertyService();
-            IEnumerable<string> queues =propertyService.GetAllPropertyIds();
+            IEnumerable<string> queues = propertyService.GetAllPropertyIds();
             var storageAccount = CloudStorageAccount.Parse(storageAccountConnectionString);
             var queueClient = storageAccount.CreateCloudQueueClient();
             var queue = queueClient.GetQueueReference(queueName);
+           
+
             foreach (var id in queues)
             {
                 CloudQueueMessage message = new CloudQueueMessage(id);
                 queue.AddMessage(message);
             }
-
-            var functionUrl = "https://durablefunction20231211134111.azurewebsites.net/api/Function1_HttpStart";
-
+            var queuedataClient = new QueueClient(storageAccountConnectionString, queueName);         // Retrieve all messages from the queue        var messages = await ReceiveAllMessagesAsync(queueClient);
+            var functionUrl = "http://localhost:7287/api/Function1_HttpStart";
+            var data = await queuedataClient.ReceiveMessagesAsync(maxMessages:18) ;
+            var jsonData = JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
+            var httpContent = new StringContent(jsonData);
             using (var httpClient = new HttpClient())
             {
-                var response = await httpClient.PostAsync(functionUrl, null);
+                var response = await httpClient.PostAsync(functionUrl, httpContent);
 
                 // Check the response status if needed
                 if (response.IsSuccessStatusCode)
@@ -44,8 +51,9 @@ namespace ConsoleApp4
                 {
                     Console.WriteLine($"Error triggering Azure Function. Status code: {response.StatusCode}");
                 }
-                queue.Delete();
+                
             }
+            queue.Clear();
         }
     }
 }
