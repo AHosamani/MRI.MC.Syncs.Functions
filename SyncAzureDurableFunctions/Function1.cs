@@ -8,6 +8,11 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Microsoft.Azure.Storage;
+using Azure.Storage.Queues.Models;
+using Azure.Storage.Queues;
+using Microsoft.Azure.Storage.Queue;
+using System.Text;
 
 namespace SyncAzureDurableFunctions
 {
@@ -33,7 +38,7 @@ namespace SyncAzureDurableFunctions
         {
             log.LogInformation("Saying hello to {name}.", name);
             return $"Hello {name}!";
-           
+
         }
 
 
@@ -43,8 +48,15 @@ namespace SyncAzureDurableFunctions
             [DurableClient] IDurableOrchestrationClient starter,
             ILogger log)
         {
-            var rawMessage = await req.Content.ReadAsStringAsync();
-            Dictionary<string, string> data = JsonConvert.DeserializeObject<Dictionary<string, string>>(rawMessage);
+            var storageAccountConnectionString = "DefaultEndpointsProtocol=https;AccountName=triptisa;AccountKey=uXRaSzNBsHMTDlb9CIueE79MtCzER56cy4mi5m/1BQXcYztrXuA7z/vc+v7m69qlgQod+ILa4yla+ASto+rYXQ==;EndpointSuffix=core.windows.net";
+            var queueName = "propertyqueue";
+            var queuedataClient = new QueueClient(storageAccountConnectionString, queueName);
+            var functionUrl = "http://localhost:7287/api/Function1_HttpStart";
+            var data1 = queuedataClient.ReceiveMessagesAsync(maxMessages: 18);
+            foreach (QueueMessage message in (await queuedataClient.ReceiveMessagesAsync(maxMessages: 18)).Value)
+            {
+                string originalMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
+            }
             // Function input comes from the request content.
             string instanceId = await starter.StartNewAsync("Function1", null);
 

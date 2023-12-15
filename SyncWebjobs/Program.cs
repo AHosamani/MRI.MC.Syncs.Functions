@@ -26,21 +26,17 @@ namespace ConsoleApp4
             var storageAccount = CloudStorageAccount.Parse(storageAccountConnectionString);
             var queueClient = storageAccount.CreateCloudQueueClient();
             var queue = queueClient.GetQueueReference(queueName);
-           
+
 
             foreach (var id in queues)
             {
                 CloudQueueMessage message = new CloudQueueMessage(id);
                 queue.AddMessage(message);
             }
-            var queuedataClient = new QueueClient(storageAccountConnectionString, queueName);         // Retrieve all messages from the queue        var messages = await ReceiveAllMessagesAsync(queueClient);
             var functionUrl = "http://localhost:7287/api/Function1_HttpStart";
-            var data = await queuedataClient.ReceiveMessagesAsync(maxMessages:18) ;
-            var jsonData = JsonConvert.SerializeObject(data, Newtonsoft.Json.Formatting.Indented);
-            var httpContent = new StringContent(jsonData);
             using (var httpClient = new HttpClient())
             {
-                var response = await httpClient.PostAsync(functionUrl, httpContent);
+                var response = await httpClient.PostAsync(functionUrl, null);
 
                 // Check the response status if needed
                 if (response.IsSuccessStatusCode)
@@ -51,7 +47,7 @@ namespace ConsoleApp4
                 {
                     Console.WriteLine($"Error triggering Azure Function. Status code: {response.StatusCode}");
                 }
-                
+
             }
             queue.Clear();
         }
