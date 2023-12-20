@@ -3,9 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncWebjobs", "SyncWebjobs\SyncWebjobs.csproj", "{BDDC372B-13A6-4CD6-B883-D9554E9138F6}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncAzureDurableFunctions", "SyncAzureDurableFunctions\SyncAzureDurableFunctions.csproj", "{2D08F06A-9CE1-407C-B233-EFEDC87DBE5F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CronJob", "CronJob\CronJob.csproj", "{629C521B-1419-4FF7-938C-6D3248BF8C02}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,14 +11,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BDDC372B-13A6-4CD6-B883-D9554E9138F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BDDC372B-13A6-4CD6-B883-D9554E9138F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BDDC372B-13A6-4CD6-B883-D9554E9138F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BDDC372B-13A6-4CD6-B883-D9554E9138F6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2D08F06A-9CE1-407C-B233-EFEDC87DBE5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2D08F06A-9CE1-407C-B233-EFEDC87DBE5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2D08F06A-9CE1-407C-B233-EFEDC87DBE5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2D08F06A-9CE1-407C-B233-EFEDC87DBE5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{629C521B-1419-4FF7-938C-6D3248BF8C02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{629C521B-1419-4FF7-938C-6D3248BF8C02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{629C521B-1419-4FF7-938C-6D3248BF8C02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{629C521B-1419-4FF7-938C-6D3248BF8C02}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
