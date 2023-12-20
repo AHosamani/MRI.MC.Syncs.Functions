@@ -5,7 +5,7 @@ VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncWebjobs", "SyncWebjobs\SyncWebjobs.csproj", "{BDDC372B-13A6-4CD6-B883-D9554E9138F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncAzureDurableFunctions", "SyncAzureDurableFunctions\SyncAzureDurableFunctions.csproj", "{2D08F06A-9CE1-407C-B233-EFEDC87DBE5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncAzureDurableFunctions", "SyncAzureDurableFunctions\SyncAzureDurableFunctions.csproj", "{2D08F06A-9CE1-407C-B233-EFEDC87DBE5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
