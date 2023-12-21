@@ -3,7 +3,9 @@ using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using MRI.PandA.Syncs.MriApis;
 using SyncAzureDurableFunctions.ConfigurationFile;
+using SyncAzureDurableFunctions.MriApis;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using MriApiClient = SyncAzureDurableFunctions.MriApis.MriApiClient;
 
 [assembly: FunctionsStartup(typeof(SyncAzureDurableFunctions.Startup))]
 
@@ -27,7 +30,7 @@ namespace SyncAzureDurableFunctions
 
             builder.Services.Configure<AppSettings>(_configuration.GetSection("AppSettings"));
             builder.Services.AddSingleton<AppSettings>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
-            
+            builder.Services.AddSingleton<IMriApiClient, MriApiClient>();
         }
 
         public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)
@@ -39,5 +42,6 @@ namespace SyncAzureDurableFunctions
                 .AddJsonFile(Path.Combine(context.ApplicationRootPath, $"local.settings.{context.EnvironmentName}.json"), optional: true, reloadOnChange: false)
                 .AddEnvironmentVariables();
         }
+
     }
 }

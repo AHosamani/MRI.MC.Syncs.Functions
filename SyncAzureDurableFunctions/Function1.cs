@@ -24,28 +24,33 @@ using System.Xml.Linq;
 using System.Numerics;
 using Microsoft.Extensions.Configuration;
 using MRI.PandA.Syncs.Data.Configuration;
+using System.Data.Common;
+using SyncAzureDurableFunctions.MriApis;
+using System.Runtime.InteropServices;
+using MRI.PandA.Syncs.MriApis;
 
 namespace SyncAzureDurableFunctions
 {
     public class Function1
     {
-
+        private readonly HttpClient _httpClientFactory;
+        public Function1(HttpClient httpClient) { 
+            _httpClientFactory = httpClient;
+        }
         [FunctionName("Function1")]
         public void RunOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
             var input = context.GetInput<List<string>>();
             IDbConnection connection = new SqlConnection("Server=sql-eastus-pna-qa.database.windows.net;Database=sqldb-eastus-pna-portal-qa;User Id=zLZ3tOGLxjk3Wx69RvyY;Password='ETeIP2N5XhOPYL71R2mj';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
             PropertyDataService property = new PropertyDataService(connection);
-            foreach (var id in input)
-            {
-
-                var inputdata = property.GetPropertyInfo(id);
-                context.CallActivityAsync<dynamic>(nameof(MixApiCall), inputdata);
-            }
+           
+                var inputdata = GetPropertyInfo();
+                context.CallActivityAsync<dynamic>(nameof(MriApiCall), inputdata);
+            
         }
 
-        [FunctionName(nameof(MixApiCall))]
-        public void MixApiCall([ActivityTrigger] Dictionary<string, string> input, ILogger log)
+        [FunctionName(nameof(MriApiCall))]
+        public void MriApiCall([ActivityTrigger] Dictionary<string, string> input, ILogger log)
         {
             var feedConfig = new FeedConfig()
             {
@@ -56,9 +61,12 @@ namespace SyncAzureDurableFunctions
 
                 MixApiKey = "89A2D1FE4C1ECEE7A2B5D4AAC86A6772076099A0A0505BE583A4730CA4A2807E",
             };
+            
             string[] ids = { input["ids"] };
-            ImageImporter import = new ImageImporter();
-            import.ImportImages(input["propertyId"], input["clientid"], ids, feedConfig);
+             SyncAzureDurableFunctions.MriApis.MriApiClient mriApiClient= new SyncAzureDurableFunctions.MriApis.MriApiClient(_httpClientFactory,feedConfig);
+            IMriApiClient client_ = mriApiClient;
+            PropertyApi.PropertyMriApi mriApiCall = new PropertyApi.PropertyMriApi(client_);
+            mriApiCall.ImportProperty(input["propertyId"], ids);
 
         }
 
@@ -87,6 +95,15 @@ namespace SyncAzureDurableFunctions
             log.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
 
             return starter.CreateCheckStatusResponse(req, instanceId);
+        }
+
+        private Dictionary<string, string> GetPropertyInfo()
+        {
+            Dictionary<string, string> list = new Dictionary<string, string>();
+            
+            list.Add("propertyId", "4b92f56b - 38e3 - 40c4 - 91f4 - 0c6de9317bc1");
+            list.Add("ids", "duke") ;
+            return list;
         }
     }
 
