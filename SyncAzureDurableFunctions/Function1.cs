@@ -13,31 +13,52 @@ using Azure.Storage.Queues.Models;
 using Azure.Storage.Queues;
 using Microsoft.Azure.Storage.Queue;
 using System.Text;
+using MRI.PandA.Data;
+using Newtonsoft.Json.Linq;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using Microsoft.AspNetCore.Mvc;
+using MRI.PandA.Data.DataModel;
+using System.Xml.Linq;
+using System.Numerics;
+using Microsoft.Extensions.Configuration;
+using MRI.PandA.Syncs.Data.Configuration;
 
 namespace SyncAzureDurableFunctions
 {
-    public static class Function1
+    public class Function1
     {
+
         [FunctionName("Function1")]
-        public static async Task<List<string>> RunOrchestrator(
-            [OrchestrationTrigger] IDurableOrchestrationContext context)
+        public void RunOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
-            var outputs = new List<string>();
+            var input = context.GetInput<List<string>>();
+            IDbConnection connection = new SqlConnection("Server=sql-eastus-pna-qa.database.windows.net;Database=sqldb-eastus-pna-portal-qa;User Id=zLZ3tOGLxjk3Wx69RvyY;Password='ETeIP2N5XhOPYL71R2mj';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            PropertyDataService property = new PropertyDataService(connection);
+            foreach (var id in input)
+            {
 
-            // Replace "hello" with the name of your Durable Activity Function.
-            outputs.Add(await context.CallActivityAsync<string>(nameof(SayHello), "Tokyo"));
-            outputs.Add(await context.CallActivityAsync<string>(nameof(SayHello), "Seattle"));
-            outputs.Add(await context.CallActivityAsync<string>(nameof(SayHello), "London"));
-
-            // returns ["Hello Tokyo!", "Hello Seattle!", "Hello London!"]
-            return outputs;
+                var inputdata = property.GetPropertyInfo(id);
+                context.CallActivityAsync<dynamic>(nameof(MixApiCall), inputdata);
+            }
         }
 
-        [FunctionName(nameof(SayHello))]
-        public static string SayHello([ActivityTrigger] string name, ILogger log)
+        [FunctionName(nameof(MixApiCall))]
+        public void MixApiCall([ActivityTrigger] Dictionary<string, string> input, ILogger log)
         {
-            log.LogInformation("Saying hello to {name}.", name);
-            return $"Hello {name}!";
+            var feedConfig = new FeedConfig()
+            {
+                ClientDatabase = "MCX6_RMAPI",
+                WebServicePassword = "Mri123!",
+                WebServiceUsername = "VW_API",
+                WebServiceUrl = "https://mrix6api-trunk.qasaas.mrisoftware.net/MRIAPIServices/api",
+
+                MixApiKey = "89A2D1FE4C1ECEE7A2B5D4AAC86A6772076099A0A0505BE583A4730CA4A2807E",
+            };
+            string[] ids = { input["ids"] };
+            ImageImporter import = new ImageImporter();
+            import.ImportImages(input["propertyId"], input["clientid"], ids, feedConfig);
 
         }
 
@@ -53,16 +74,20 @@ namespace SyncAzureDurableFunctions
             var queuedataClient = new QueueClient(storageAccountConnectionString, queueName);
             var functionUrl = "http://localhost:7287/api/Function1_HttpStart";
             var data1 = queuedataClient.ReceiveMessagesAsync(maxMessages: 18);
+
+            List<string> propertyIds = new List<string>();
             foreach (QueueMessage message in (await queuedataClient.ReceiveMessagesAsync(maxMessages: 18)).Value)
             {
                 string originalMessage = Encoding.UTF8.GetString(Convert.FromBase64String(message.MessageText));
+                propertyIds.Add(originalMessage);
             }
             // Function input comes from the request content.
-            string instanceId = await starter.StartNewAsync("Function1", null);
+            string instanceId = await starter.StartNewAsync("Function1", propertyIds);
 
             log.LogInformation("Started orchestration with ID = '{instanceId}'.", instanceId);
 
             return starter.CreateCheckStatusResponse(req, instanceId);
         }
     }
+
 }

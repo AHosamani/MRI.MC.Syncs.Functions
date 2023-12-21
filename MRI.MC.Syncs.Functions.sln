@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SyncAzureDurableFunctions",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CronJob", "CronJob\CronJob.csproj", "{629C521B-1419-4FF7-938C-6D3248BF8C02}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MRI.PandA.Data", "MRI.PandA.Data\MRI.PandA.Data.csproj", "{E207EE4B-F1AF-4C74-A83A-6C1C998B4401}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{629C521B-1419-4FF7-938C-6D3248BF8C02}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{629C521B-1419-4FF7-938C-6D3248BF8C02}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{629C521B-1419-4FF7-938C-6D3248BF8C02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E207EE4B-F1AF-4C74-A83A-6C1C998B4401}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E207EE4B-F1AF-4C74-A83A-6C1C998B4401}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E207EE4B-F1AF-4C74-A83A-6C1C998B4401}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E207EE4B-F1AF-4C74-A83A-6C1C998B4401}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
