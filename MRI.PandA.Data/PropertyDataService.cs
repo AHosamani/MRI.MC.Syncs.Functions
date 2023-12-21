@@ -87,4 +87,15 @@ public class PropertyDataService : IPropertyDataService {
 
     _connection.Execute(command, parameters);
   }
+    public IEnumerable<string> GetAllPropertyIds()
+    {
+        List<string> propertyIds = new List<string>();
+        var command = "SELECT [PropertyId] FROM [dbo].[PropertySync]";
+        var ress = _connection.Query<dynamic>(command);
+        foreach (var id in ress)
+        {
+            propertyIds.Add(id.PropertyId);
+        }
+        return propertyIds;
+    }
 }
