@@ -1,16 +1,9 @@
 ﻿using Microsoft.Azure.Storage.Queue;
 using Microsoft.Azure.Storage;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using SyncWebjobs;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using Azure.Storage.Queues;
+using Microsoft.Extensions.Configuration;
+using MRI.PandA.Data;
+using System.Data.SqlClient;
+using System.Data;
 
 namespace ConsoleApp4
 {
@@ -18,11 +11,13 @@ namespace ConsoleApp4
     {
         static async Task Main()
         {
-
-            var storageAccountConnectionString = "DefaultEndpointsProtocol=https;AccountName=triptisa;AccountKey=uXRaSzNBsHMTDlb9CIueE79MtCzER56cy4mi5m/1BQXcYztrXuA7z/vc+v7m69qlgQod+ILa4yla+ASto+rYXQ==;EndpointSuffix=core.windows.net";
+            IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
+            IConfiguration configuration = configurationBuilder.Build();
+            var storageAccountConnectionString = configuration.GetConnectionString("StorageAccount");
             var queueName = "propertyqueue";
-            PropertyService propertyService = new PropertyService();
-            IEnumerable<string> queues = propertyService.GetAllPropertyIds();
+            IDbConnection connection = new SqlConnection(configuration.GetConnectionString("QAdbConnection"));
+            PropertyDataService property = new PropertyDataService(connection);
+            var queues = property.GetAllPropertyIds();
             var storageAccount = CloudStorageAccount.Parse(storageAccountConnectionString);
             var queueClient = storageAccount.CreateCloudQueueClient();
             var queue = queueClient.GetQueueReference(queueName);
