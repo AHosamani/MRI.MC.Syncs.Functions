@@ -1,11 +1,8 @@
-﻿using System;
+﻿using MRI.PandA.Syncs.Data.Configuration;
+using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using Microsoft.Extensions.DependencyInjection;
-using MRI.PandA.Syncs.Data.Configuration;
 
 namespace SyncAzureDurableFunctions.MriApis;
 
@@ -35,6 +32,9 @@ public class MriApiClient : IMriApiClient
     public async Task<T> MakeRequest<T>(string url, string payload)
     {
         var response = await _client.PostAsync($"{new Uri(_feedConfig.WebServiceUrl).AbsolutePath}/{url}", new StringContent(payload));
+
+        var dd = new StringContent(payload);
+
         if (!response.IsSuccessStatusCode)
         {
             throw new Exception($"Error trying to call API {url}. Reason: {response.ReasonPhrase}");

@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MRI.PandA.Syncs.MriApis;
-using SyncAzureDurableFunctions.ConfigurationFile;
 using SyncAzureDurableFunctions.MriApis;
 using System;
 using System.Collections.Generic;
@@ -28,9 +27,8 @@ namespace SyncAzureDurableFunctions
             var serviceProvider = builder.Services.BuildServiceProvider();
             _configuration = serviceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
 
-            builder.Services.Configure<AppSettings>(_configuration.GetSection("AppSettings"));
-            builder.Services.AddSingleton<AppSettings>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value);
-            builder.Services.AddSingleton<IMriApiClient, MriApiClient>();
+            //builder.Services.AddSingleton<IMriApiClient, MriApiClient>();
+            builder.Services.AddScoped<IMriApiClientFactory, MriApiClientFactory>();
         }
 
         public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)
