@@ -5,7 +5,7 @@ using MRI.PandA.Data;
 using System.Data.SqlClient;
 using System.Data;
 
-namespace ConsoleApp4
+namespace SyncWebjobs
 {
     class Program
     {
@@ -13,26 +13,27 @@ namespace ConsoleApp4
         {
             IConfigurationBuilder configurationBuilder = new ConfigurationBuilder().AddJsonFile("appsettings.json");
             IConfiguration configuration = configurationBuilder.Build();
+
             var storageAccountConnectionString = configuration.GetConnectionString("StorageAccount");
             var queueName = "propertyqueue";
-            IDbConnection connection = new SqlConnection(configuration.GetConnectionString("QAdbConnection"));
+
+            IDbConnection connection = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
             PropertyDataService property = new PropertyDataService(connection);
             var queues = property.GetAllPropertyIds();
+
             var storageAccount = CloudStorageAccount.Parse(storageAccountConnectionString);
             var queueClient = storageAccount.CreateCloudQueueClient();
             var queue = queueClient.GetQueueReference(queueName);
-
 
             foreach (var id in queues)
             {
                 CloudQueueMessage message = new CloudQueueMessage(id);
                 queue.AddMessage(message);
             }
-            var functionUrl = "http://localhost:7287/api/Function1_HttpStart";
+            var functionUrl = configuration.GetSection("Url").GetChildren().FirstOrDefault().Value;
             using (var httpClient = new HttpClient())
             {
                 var response = await httpClient.PostAsync(functionUrl, null);
-
                 // Check the response status if needed
                 if (response.IsSuccessStatusCode)
                 {
@@ -42,9 +43,9 @@ namespace ConsoleApp4
                 {
                     Console.WriteLine($"Error triggering Azure Function. Status code: {response.StatusCode}");
                 }
-
             }
             queue.Clear();
         }
     }
 }
+
