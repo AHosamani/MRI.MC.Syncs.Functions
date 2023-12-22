@@ -8,7 +8,7 @@ namespace SyncAzureDurableFunctions.ConfigurationFile
 {
     public class AppSettings
     {
-        public string DBConnection { get; set; }
+        public string DefaultConnection { get; set; }
         public string InstallPath { get; set; }
         public string Archive { get; set; }
         public string Data { get; set; }
