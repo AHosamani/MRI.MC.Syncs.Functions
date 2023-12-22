@@ -28,45 +28,49 @@ using System.Data.Common;
 using SyncAzureDurableFunctions.MriApis;
 using System.Runtime.InteropServices;
 using MRI.PandA.Syncs.MriApis;
+using Microsoft.Extensions.Configuration.Json;
+using Castle.Core.Configuration;
+using SyncAzureDurableFunctions.ConfigurationFile;
 
 namespace SyncAzureDurableFunctions
 {
     public class Function1
     {
         private readonly HttpClient _httpClientFactory;
-        public Function1(HttpClient httpClient) { 
+        private readonly AppSettings _configuration;
+        MRI.PandA.Syncs.Data.Configuration.FeedConfig _feedConfig = new();
+        public Function1(HttpClient httpClient, AppSettings configuration, FeedConfig feedConfig)
+        {
             _httpClientFactory = httpClient;
+            _configuration = configuration;
+
+            this._feedConfig.ClientDatabase = "MCX6_RMAPI";
+            this._feedConfig.WebServicePassword = "Mri123!";
+            this._feedConfig.WebServiceUsername = "VW_API";
+            this._feedConfig.WebServiceUrl = "https://mrix6api-trunk.qasaas.mrisoftware.net/MRIAPIServices/api";
+            this._feedConfig.MixApiKey = "89A2D1FE4C1ECEE7A2B5D4AAC86A6772076099A0A0505BE583A4730CA4A2807E";
+
         }
+
         [FunctionName("Function1")]
-        public void RunOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
+        public async Task RunOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context)
         {
             var input = context.GetInput<List<string>>();
-            IDbConnection connection = new SqlConnection("Server=sql-eastus-pna-qa.database.windows.net;Database=sqldb-eastus-pna-portal-qa;User Id=zLZ3tOGLxjk3Wx69RvyY;Password='ETeIP2N5XhOPYL71R2mj';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
+            IDbConnection connection = new SqlConnection(_configuration.DefaultConnection);
             PropertyDataService property = new PropertyDataService(connection);
-           
-                var inputdata = GetPropertyInfo();
-                context.CallActivityAsync<dynamic>(nameof(MriApiCall), inputdata);
-            
+
+            var inputdata = property.GetPropertyInfo();
+            context.CallActivityAsync<dynamic>(nameof(Execute), inputdata);
         }
 
-        [FunctionName(nameof(MriApiCall))]
-        public void MriApiCall([ActivityTrigger] Dictionary<string, string> input, ILogger log)
-        {
-            var feedConfig = new FeedConfig()
-            {
-                ClientDatabase = "MCX6_RMAPI",
-                WebServicePassword = "Mri123!",
-                WebServiceUsername = "VW_API",
-                WebServiceUrl = "https://mrix6api-trunk.qasaas.mrisoftware.net/MRIAPIServices/api",
-
-                MixApiKey = "89A2D1FE4C1ECEE7A2B5D4AAC86A6772076099A0A0505BE583A4730CA4A2807E",
-            };
-            
+        [FunctionName(nameof(Execute))]
+        public async Task Execute([ActivityTrigger] Dictionary<string, string> input, ILogger log)
+        { 
             string[] ids = { input["ids"] };
-             SyncAzureDurableFunctions.MriApis.MriApiClient mriApiClient= new SyncAzureDurableFunctions.MriApis.MriApiClient(_httpClientFactory,feedConfig);
+            SyncAzureDurableFunctions.MriApis.MriApiClient mriApiClient = new SyncAzureDurableFunctions.MriApis.MriApiClient(_httpClientFactory, _feedConfig);
             IMriApiClient client_ = mriApiClient;
             PropertyApi.PropertyMriApi mriApiCall = new PropertyApi.PropertyMriApi(client_);
-            mriApiCall.ImportProperty(input["propertyId"], ids);
+            await mriApiCall.ImportProperty(input["propertyId"], ids);
 
         }
 
@@ -80,9 +84,6 @@ namespace SyncAzureDurableFunctions
             var storageAccountConnectionString = "DefaultEndpointsProtocol=https;AccountName=triptisa;AccountKey=uXRaSzNBsHMTDlb9CIueE79MtCzER56cy4mi5m/1BQXcYztrXuA7z/vc+v7m69qlgQod+ILa4yla+ASto+rYXQ==;EndpointSuffix=core.windows.net";
             var queueName = "propertyqueue";
             var queuedataClient = new QueueClient(storageAccountConnectionString, queueName);
-            var functionUrl = "http://localhost:7287/api/Function1_HttpStart";
-            var data1 = queuedataClient.ReceiveMessagesAsync(maxMessages: 18);
-
             List<string> propertyIds = new List<string>();
             foreach (QueueMessage message in (await queuedataClient.ReceiveMessagesAsync(maxMessages: 18)).Value)
             {
@@ -97,14 +98,6 @@ namespace SyncAzureDurableFunctions
             return starter.CreateCheckStatusResponse(req, instanceId);
         }
 
-        private Dictionary<string, string> GetPropertyInfo()
-        {
-            Dictionary<string, string> list = new Dictionary<string, string>();
-            
-            list.Add("propertyId", "4b92f56b - 38e3 - 40c4 - 91f4 - 0c6de9317bc1");
-            list.Add("ids", "duke") ;
-            return list;
-        }
     }
 
 }

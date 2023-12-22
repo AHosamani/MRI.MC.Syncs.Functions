@@ -98,4 +98,13 @@ public class PropertyDataService : IPropertyDataService {
         }
         return propertyIds;
     }
+
+    public Dictionary<string, string> GetPropertyInfo()
+    {
+        Dictionary<string, string> list = new Dictionary<string, string>();
+
+        list.Add("propertyId", "4b92f56b-38e3-40c4-91f4-0c6de9317bc1");
+        list.Add("ids", "duke");
+        return list;
+    }
 }
