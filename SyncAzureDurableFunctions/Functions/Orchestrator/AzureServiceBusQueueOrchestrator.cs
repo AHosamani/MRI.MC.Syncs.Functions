@@ -1,50 +1,71 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿using Azure.Messaging;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Extensions.Logging;
 using MRI.PandA.Data;
 using MRI.PandA.Data.DataModel;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using static SyncAzureDurableFunctions.Data.Schema.PropertyResult;
+using Property = SyncAzureDurableFunctions.Data.DomainModel.Property;
 
 namespace SyncAzureDurableFunctions.Functions.Orchestrator
 {
     public static class AzureServiceBusQueueOrchestrator
     {
         [FunctionName("AzureServiceBusQueueOrchestrator")]
-        public static async Task<bool> RunOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log)
+        public static async Task<Results> RunOrchestrator([OrchestrationTrigger] IDurableOrchestrationContext context, ILogger log)
         {
             try
             {
                 string inputMessage = context.GetInput<string>();
-                List<PropertyBase> propertiesToSync = ApiCore.DeSerializeMessage(inputMessage);                
+                CloudEvent cloudEvent = ApiCore.DeSerializeMessageCloudEvent(inputMessage);
+                IEnumerable<PropertyBase> properties = ApiCore.DeSerializeMessage(cloudEvent.Data.ToString());
 
-                var tasks = new Task<bool>[propertiesToSync.Count];
-
-                for (int i = 0; i < propertiesToSync.Count; i++)
+                foreach (var property in properties)
                 {
-                    log.LogInformation($"A new properties added named {propertiesToSync[i].Name} was uploaded to Azure Storage");
-                    //Chain #1 
-                    tasks[i] = context.CallActivityAsync<bool>("ImportAndProcessProperty", propertiesToSync[i]);
+                    try
+                    {
+                        log.LogInformation($"Processing property {property.RefId}");
 
+                        var idList = new XElement("Ids");
+                        idList.Add(new XElement("Id", property.RefId));
+                        var payloadXml = new XDocument(new XElement("GetInfo", new XElement("Type", "Property"), idList));
+
+                        var propertyInfoTask = context.CallActivityAsync<Property>("A_FetchPropertyInfo", payloadXml.ToString());
+                        //var propertyProcessingTask = context.CallActivityAsync<Results>("A_ImportAndProcessProperty", propertyInfoTask);
+
+                        await propertyInfoTask;
+
+                        if (propertyInfoTask.Result != null)
+                        {
+                            var propertyProcessingTask = await context.CallActivityAsync<Results>("A_ImportAndProcessProperty", propertyInfoTask);
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        if (!context.IsReplaying)
+                        {
+                            log.LogError($"Failed while processing property", ex);
+                        }
+                    }
                 }
 
-                //Chain #2
-
-                //Chain #3
-
-                await Task.WhenAll(tasks);
-                var allSuccessful = tasks.All(t => t.Result);
-
                 log.LogInformation($"Done with the orchestration with Durable Context Id:  {context.InstanceId}");
-                return allSuccessful;
+                return default;
+            }
+            catch (FunctionFailedException ex)
+            {
+                log.LogError($"Something went wrong " + ex.Message);
+                return default;
             }
             catch (Exception ex)
             {
-                //TODO Handle possible errors and do a retry if needed or retry a function
                 log.LogError($"Something went wrong " + ex.Message);
-                throw;
+                return default;
             }
         }
     }

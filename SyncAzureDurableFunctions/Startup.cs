@@ -1,5 +1,6 @@
 ﻿using Castle.Core.Configuration;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -29,6 +30,14 @@ namespace SyncAzureDurableFunctions
 
             //builder.Services.AddSingleton<IMriApiClient, MriApiClient>();
             builder.Services.AddScoped<IMriApiClientFactory, MriApiClientFactory>();
+
+        //    builder.Services.AddDbContext<IDbContext, SqlContext>(options =>
+        //options.UseSqlServer(connectionString)); //To inject DbContext
+
+            builder.Services.AddAzureClients(clientBuilder =>
+            {
+                clientBuilder.AddBlobServiceClient(Environment.GetEnvironmentVariable("StorageConnectionString"));
+            });
         }
 
         public override void ConfigureAppConfiguration(IFunctionsConfigurationBuilder builder)

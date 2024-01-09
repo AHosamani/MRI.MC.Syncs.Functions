@@ -44,7 +44,7 @@ namespace SyncAzureDurableFunctions.Functions.ClientFunctions
 
             while (status == "PENDING" || status == "RUNNING")
             {
-                await Task.Delay(1000);
+                //await Task.Delay(1000);
                 orchestrationStatus = await starter.GetStatusAsync(instanceId);
                 status = orchestrationStatus.RuntimeStatus.ToString().ToUpper();
             }

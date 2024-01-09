@@ -1,12 +1,11 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿using MarketConnect.Data.Repository;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using MRI.PandA.Data.DataModel;
-using SyncAzureDurableFunctions.FunctionTasks;
+using MarketConnect.Data.Models;
 using System;
 using System.Threading.Tasks;
-using static SyncAzureDurableFunctions.Data.Schema.PropertyResult;
 
 namespace SyncAzureDurableFunctions.Functions.ActivityFunctions
 {
@@ -22,27 +21,29 @@ namespace SyncAzureDurableFunctions.Functions.ActivityFunctions
         /// </summary>
         private readonly ILogger<ImportAndProcessProperty> logger;
 
+        MarketConnectDestinationRepository marketConnectDestinationRepository;
+
         public ImportAndProcessProperty(IServiceProvider serviceProvider, ILogger<ImportAndProcessProperty> logger)
         {
             this.serviceProvider = serviceProvider;
             this.logger = logger;
+            marketConnectDestinationRepository = new MarketConnectDestinationRepository();
         }
 
-        [FunctionName("ImportAndProcessProperty")]
-        public async Task<bool> ImportAndProcessPropertyActivity([ActivityTrigger] PropertyBase property, ILogger log, ExecutionContext executionContext)
+        [FunctionName("A_ImportAndProcessProperty")]
+        public async Task<bool> ImportAndProcessPropertyActivity([ActivityTrigger] ResultsInfo propertyInfo, ILogger log, ExecutionContext executionContext)
         {
             //Config for Azure Service Bus
             var azureServiceBusConfig = new ConfigurationBuilder()
                  .SetBasePath(executionContext.FunctionAppDirectory)
                  .AddJsonFile("local.settings.json", optional: true, reloadOnChange: true)
                  .AddEnvironmentVariables()
-                 .Build();
+            .Build();
             
             try
             {
-                // Call PMX API to get XML
-                var importer = new PMXPropertyImporter(serviceProvider, logger);
-                Results rmPropertyData = await importer.Run("nss");
+                log.LogInformation($"Updating property info for: {propertyInfo.RmPropId}");
+                //marketConnectDestinationRepository.UpdatePropertyInformation(propertyInfo, "");
 
             }
             catch (Exception ex)
@@ -58,7 +59,7 @@ namespace SyncAzureDurableFunctions.Functions.ActivityFunctions
 
                 // TODO await
 
-                // await importer.Run(propertyDataService, property, new string[] { property.RefId });
+                //await importer.Run(propertyDataService, property, new string[] { property.RefId });
             }
             catch (Exception ex)
             {
